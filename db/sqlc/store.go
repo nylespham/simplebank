@@ -66,7 +66,7 @@ func (store *Store) NewTransfer(ctx context.Context, arg TranferParams) (Transfe
 			return err
 		}
 
-		result.FromAccount, err = q.CreateEntry(ctx, CreateEntryParams{
+		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.FromAccountID,
 			Amount:    -arg.Amount,
 		})
@@ -74,7 +74,7 @@ func (store *Store) NewTransfer(ctx context.Context, arg TranferParams) (Transfe
 			return err
 		}
 
-		result.ToAccount, err = q.CreateEntry(ctx, CreateEntryParams{
+		result.ToEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.ToAccountID,
 			Amount:    arg.Amount,
 		})
