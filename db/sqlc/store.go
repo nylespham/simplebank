@@ -38,11 +38,11 @@ func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 }
 
 // Provides required parameters for creating a transfer
-type TranferParams struct {
-	FromAccountID int64 `json:"from_account_id"`
-	ToAccountID   int64 `json:"to_account_id"`
-	Amount        int64 `json:"amount"`
-}
+// type CreateTransferParams struct {
+// 	FromAccountID int64 `json:"from_account_id"`
+// 	ToAccountID   int64 `json:"to_account_id"`
+// 	Amount        int64 `json:"amount"`
+// }
 
 type TransferTxResult struct {
 	Transfer    Transfer `json:"transfer"`
@@ -52,7 +52,7 @@ type TransferTxResult struct {
 	ToEntry     Entry    `json:"to_entry"`
 }
 
-func (store *Store) NewTransfer(ctx context.Context, arg TranferParams) (TransferTxResult, error) {
+func (store *Store) TransferTx(ctx context.Context, arg CreateTransferParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(q *Queries) error {
@@ -83,6 +83,32 @@ func (store *Store) NewTransfer(ctx context.Context, arg TranferParams) (Transfe
 		}
 
 		// TDOO: update accounts' balance
+		account1, err := q.GetAccountForUpdate(ctx, arg.FromAccountID)
+		if err != nil {
+			return err
+		}
+
+		result.FromAccount, err = q.UpdateAccount(ctx, UpdateAccountParams{
+			ID:      arg.FromAccountID,
+			Balance: account1.Balance - arg.Amount,
+		})
+		if err != nil {
+			return err
+		}
+
+		account2, err := q.GetAccountForUpdate(ctx, arg.ToAccountID)
+		if err != nil {
+			return err
+		}
+
+		result.ToAccount, err = q.UpdateAccount(ctx, UpdateAccountParams{
+			ID:      arg.ToAccountID,
+			Balance: account2.Balance + arg.Amount,
+		})
+
+		if err != nil {
+			return err
+		}
 
 		return nil
 
