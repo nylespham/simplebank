@@ -13,9 +13,6 @@ func TestCreateTransfer(t *testing.T) {
 
 	account1 := CreateRandomAccount(t)
 	account2 := CreateRandomAccount(t)
-	fmt.Println(">>before")
-	fmt.Println("account1:", account1.Balance)
-	fmt.Println("account2:", account2.Balance)
 
 	n := 5
 	amount := int64(10)
@@ -25,8 +22,10 @@ func TestCreateTransfer(t *testing.T) {
 	results := make(chan TransferTxResult)
 
 	for i := 0; i < n; i++ {
+		txName := fmt.Sprintf("tx %d", i+1)
 		go func() {
-			result, err := store.TransferTx(context.Background(), CreateTransferParams{
+			ctx := context.WithValue(context.Background(), txKey, txName)
+			result, err := store.TransferTx(ctx, CreateTransferParams{
 				FromAccountID: account1.ID,
 				ToAccountID:   account2.ID,
 				Amount:        amount,
@@ -93,9 +92,6 @@ func TestCreateTransfer(t *testing.T) {
 		require.Equal(t, account2.ID, toAccount.ID)
 
 		// check accounts' balance
-		fmt.Println(">>tx: ")
-		fmt.Println("from:", fromAccount.Balance)
-		fmt.Println("to:", toAccount.Balance)
 		diff1 := account1.Balance - fromAccount.Balance
 		diff2 := toAccount.Balance - account2.Balance
 		require.Equal(t, diff1, diff2)
@@ -116,7 +112,6 @@ func TestCreateTransfer(t *testing.T) {
 	updatedAccount2, err := testQueries.GetAccount(context.Background(), account2.ID)
 	require.NoError(t, err)
 
-	fmt.Println(">>after:", updatedAccount1.Balance, updatedAccount2.Balance)
 	require.Equal(t, account1.Balance-int64(n)*amount, updatedAccount1.Balance)
 	require.Equal(t, account2.Balance+int64(n)*amount, updatedAccount2.Balance)
 }
